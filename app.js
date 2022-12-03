@@ -18,15 +18,14 @@ require("./config")(app);
 const indexRoutes = require("./routes/index.routes");
 app.use("/api", indexRoutes);
 
-const userRoutes = require('./routes/profile.routes');
-app.use("/", userRoutes);
-
 const articleRoutes = require('./routes/article.routes');
 app.use("/", articleRoutes);
 
 const authRoutes = require('./routes/auth.routes');
 app.use("/", authRoutes);
 
+const commentRoutes = require('./routes/comment.routes');
+app.use("/", commentRoutes);
 
 
 

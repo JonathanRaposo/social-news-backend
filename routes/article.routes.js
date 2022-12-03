@@ -13,7 +13,7 @@ const { isAuthenticated } = require('../middleware/jwt.middleware');
 // POST - create article and add it to the user
 
 router.post('/api/articles', isAuthenticated, (req, res, next) => {
-    console.log(req.body);
+    // console.log(req.body);
 
     const { image, url, name, description, userId } = req.body;
 
@@ -23,7 +23,7 @@ router.post('/api/articles', isAuthenticated, (req, res, next) => {
             return User.findByIdAndUpdate(userId, { $push: { articles: newArticle._id } })
         })
         .then((response) => {
-            console.log('response after article being created: ', response)
+            console.log('response with updated user: ', response)
             res.json(response);
         })
         .catch((error) => {
@@ -37,6 +37,8 @@ router.get('/api/articles', isAuthenticated, (req, res, next) => {
 
     Article.find()
 
+        .populate('comments')
+        .populate('user')
         .then((allArticles) => {
             console.log('All articles from the db: ', allArticles);
             res.json(allArticles);
@@ -88,7 +90,8 @@ router.get('/api/articles/:articleId', isAuthenticated, (req, res, next) => {
 
     Article.findById(articleId)
 
-
+        .populate('user')
+        .populate('comments')
         .then((article) => {
             console.log('found article from the database: ', article);
             res.status(200).json(article);
@@ -97,6 +100,37 @@ router.get('/api/articles/:articleId', isAuthenticated, (req, res, next) => {
             res.json(error);
         });
 });
+
+
+// router.get('/api/articles/:articleId', isAuthenticated, (req, res, next) => {
+
+//     const { articleId } = req.params;
+
+//     if (!mongoose.Types.ObjectId.isValid(articleId)) {
+//         res.status(400).json({ message: 'Specified id is not valid' });
+//         return;
+//     }
+
+
+//     Article.findById(articleId)
+//         .populate('user comments') // <-- the same as .populate('author).populate('comments')
+//         .populate({
+//             // we are populating author in the previously populated comments
+//             path: 'comments',
+//             populate: {
+//                 path: 'user',
+//                 model: 'User'
+//             }
+//         })
+//         .then(foundArticle => res.status(200).json(foundArticle))
+//         .catch(error => {
+//             res.json(error)
+//         });
+// });
+
+
+
+
 
 // PUT - update a specific article by id
 
@@ -178,6 +212,9 @@ Article.findByIdAndRemove(articleId)
 
 });
 module.exports = router;
+
+
+
 
 
 
