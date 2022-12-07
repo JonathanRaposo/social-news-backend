@@ -15,9 +15,9 @@ const { isAuthenticated } = require('../middleware/jwt.middleware');
 router.post('/api/articles', isAuthenticated, (req, res, next) => {
     // console.log(req.body);
 
-    const { image, url, name, description, userId } = req.body;
+    const { image, url, name, description, user } = req.body;
 
-    Article.create({ image, url, name, description, user: userId })
+    Article.create({ image, url, name, description, user })
         .then((newArticle) => {
             console.log("Created article from database: ", newArticle);
             return User.findByIdAndUpdate(userId, { $push: { articles: newArticle._id } })
@@ -37,8 +37,8 @@ router.get('/api/articles', isAuthenticated, (req, res, next) => {
 
     Article.find()
 
-        .populate('comments')
-        .populate('user')
+
+        .populate('user comments')
         .then((allArticles) => {
             console.log('All articles from the db: ', allArticles);
             res.json(allArticles);
@@ -90,8 +90,8 @@ router.get('/api/articles/:articleId', isAuthenticated, (req, res, next) => {
 
     Article.findById(articleId)
 
-        .populate('user')
-        .populate('comments')
+
+        .populate('user comments')
         .then((article) => {
             console.log('found article from the database: ', article);
             res.status(200).json(article);
