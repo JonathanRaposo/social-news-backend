@@ -1,11 +1,12 @@
 const express = require('express');
 const router = express.Router();
-
 const mongoose = require('mongoose');
-const ArticleModel = require('../models/Article.model');
+
+
 
 const Article = require('../models/Article.model');
 const User = require('../models/User.model');
+const hash = require('object-hash');
 
 // import middleware to protect routes
 const { isAuthenticated } = require('../middleware/jwt.middleware');
@@ -17,10 +18,24 @@ router.post('/api/articles', isAuthenticated, (req, res, next) => {
 
     const { image, url, name, description, user } = req.body;
 
+    const articleHash = hash.MD5(req.body);
+
+    // search for hash
+
+    Article.findOne({ external_id: articleHash })
+        .then((foundHash) = {
+
+            if(foundHash) {
+
+                return User.findByIdAndUpdate(user, foundHash, { new: true })
+            }
+        })
+
+
     Article.create({ image, url, name, description, user })
         .then((newArticle) => {
             console.log("Created article from database: ", newArticle);
-            return User.findByIdAndUpdate(userId, { $push: { articles: newArticle._id } })
+            return User.findByIdAndUpdate(user, { $push: { articles: newArticle._id } })
         })
         .then((response) => {
             console.log('response with updated user: ', response)
@@ -89,7 +104,6 @@ router.get('/api/articles/:articleId', isAuthenticated, (req, res, next) => {
     }
 
     Article.findById(articleId)
-
 
         .populate('user comments')
         .then((article) => {
@@ -178,6 +192,7 @@ router.delete('/api/articles/:articleId', isAuthenticated, (req, res, next) => {
             return User.findOneAndUpdate({ _id: userId }, { $pull: { articles: article._id } })
 
         })
+
     Article.findByIdAndRemove(articleId)
         .then(() => {
             res.json({ message: `Article #${articleId} is removed` })
