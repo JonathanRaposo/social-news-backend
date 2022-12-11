@@ -15,9 +15,10 @@ router.post('/api/articles/:articleId/comment', isAuthenticated, (req, res, next
     const { articleId } = req.params;
     const { author, content, article } = req.body;
 
-
+    console.log('author: ', author)
 
     Comment.create({ author, content, article })
+
         .then((dbcomment) => {
             console.log("this is the new comment: ", dbcomment)
             return Article.findByIdAndUpdate(articleId, { $push: { comments: dbcomment._id } })
@@ -25,42 +26,14 @@ router.post('/api/articles/:articleId/comment', isAuthenticated, (req, res, next
         .then((updatedArticle) => {
             res.json(updatedArticle)
         })
-    // res.json({ author, content, article })
-
-
 
 
 })
-//   User.findOne({ _id: author })
-//         .then((userFromDB) => {
-//             console.log('user from database: ', userFromDB)
-
-//             user = userFromDB;
-//             return Article.findById(articleId);
-
-//         })
-//         .then((articleFromDB) => {
-//             console.log('this is the article from the database: ', articleFromDB);
-
-//             let newComment;
 
 
-//             newComment = new Comment({ author: user._id, content, article: articleFromDB._id });
 
 
-//             newComment.save()
-//                 .then((commentFromDB) => {
-//                     console.log('this is new comment: ', commentFromDB)
-//                     articleFromDB.comments.push(commentFromDB._id);
-//                     articleFromDB.save()
-//                         .then((updatedArticle) => {
-//                             res.json(updatedArticle)
-//                         })
-//                 })
-//         })
-//         .catch((error) => {
-//             res.json(error)
-//         })
+
 
 
 module.exports = router;

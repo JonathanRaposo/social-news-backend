@@ -1,11 +1,13 @@
 const express = require('express');
 const router = express.Router();
-
 const mongoose = require('mongoose');
-const ArticleModel = require('../models/Article.model');
+const jsonwebtoken = require('jsonwebtoken');
+
+
 
 const Article = require('../models/Article.model');
 const User = require('../models/User.model');
+
 
 // import middleware to protect routes
 const { isAuthenticated } = require('../middleware/jwt.middleware');
@@ -13,14 +15,24 @@ const { isAuthenticated } = require('../middleware/jwt.middleware');
 // POST - create article and add it to the user
 
 router.post('/api/articles', isAuthenticated, (req, res, next) => {
-    // console.log(req.body);
+    console.log(req.body);
 
     const { image, url, name, description, user } = req.body;
 
-    Article.create({ image, url, name, description, user })
-        .then((newArticle) => {
-            console.log("Created article from database: ", newArticle);
-            return User.findByIdAndUpdate(userId, { $push: { articles: newArticle._id } })
+
+
+    Article.findOne({ url: url })
+
+        .then((articlefound) => {
+            if (articlefound) {
+                return User.findByIdAndUpdate(user, { $push: { articles: articlefound._id } })
+            } else {
+                // TODO - verify parameter content
+                return Article.create({ image, url, name, description, user })
+                    .then((newArticle) => {
+                        return User.findByIdAndUpdate(user, { $push: { articles: newArticle._id } })
+                    })
+            }
         })
         .then((response) => {
             console.log('response with updated user: ', response)
@@ -29,23 +41,44 @@ router.post('/api/articles', isAuthenticated, (req, res, next) => {
         .catch((error) => {
             res.json(error)
         });
+
 });
 
 // GET - Retrieve all of the user's articles
 
 router.get('/api/articles', isAuthenticated, (req, res, next) => {
+    // let token = isAuthenticated.getToken(req)
+    // console.log('auth token: ', token)
+    let token = req.headers.authorization.substring(`Bearer `.length)
 
-    Article.find()
+    console.log('auth token: ', token)
+    console.log('1111111: ', jsonwebtoken.decode(token, { complete: true }).payload._id)
+    const userId = jsonwebtoken.decode(token, { complete: true }).payload._id;
 
+    User.findById(userId)
 
-        .populate('user comments')
-        .then((allArticles) => {
-            console.log('All articles from the db: ', allArticles);
-            res.json(allArticles);
+        .then((userFromDB) => {
+            const articles = userFromDB.articles;
+            // const ids = []
+
+            Article.find({ '_id': { $in: articles } })
+                .populate('user comments')
+                .populate(
+                    {
+                        path: 'comments',
+                        populate: {
+                            path: 'author'
+                        }
+                    }
+                )
+                .then((allArticles) => {
+                    res.json(allArticles);
+                })
+                .catch((error) => {
+                    res.json(error)
+                });
         })
-        .catch((error) => {
-            res.json(error)
-        });
+
 });
 // Route to sort articles in descending order
 router.get('/api/articles/sort/descending', isAuthenticated, (req, res, next) => {
@@ -53,7 +86,6 @@ router.get('/api/articles/sort/descending', isAuthenticated, (req, res, next) =>
     Article.find()
         .then((result) => {
             const sortedArticles = result.sort((a, b) => b.createdAt - a.createdAt)
-            console.log('my articles: ', sortedArticles)
             res.json(sortedArticles);
         })
         .catch((error) => {
@@ -68,7 +100,6 @@ router.get('/api/articles/sort/ascending', isAuthenticated, (req, res, next) => 
     Article.find()
         .then((result) => {
             const sortedArticles = result.sort((a, b) => a.createdAt - b.createdAt)
-            console.log('my articles: ', sortedArticles);
             res.json(sortedArticles);
         })
         .catch((error) => {
@@ -90,7 +121,6 @@ router.get('/api/articles/:articleId', isAuthenticated, (req, res, next) => {
 
     Article.findById(articleId)
 
-
         .populate('user comments')
         .then((article) => {
             console.log('found article from the database: ', article);
@@ -102,42 +132,9 @@ router.get('/api/articles/:articleId', isAuthenticated, (req, res, next) => {
 });
 
 
-// router.get('/api/articles/:articleId', isAuthenticated, (req, res, next) => {
-
-//     const { articleId } = req.params;
-
-//     if (!mongoose.Types.ObjectId.isValid(articleId)) {
-//         res.status(400).json({ message: 'Specified id is not valid' });
-//         return;
-//     }
-
-
-//     Article.findById(articleId)
-//         .populate('user comments') // <-- the same as .populate('author).populate('comments')
-//         .populate({
-//             // we are populating author in the previously populated comments
-//             path: 'comments',
-//             populate: {
-//                 path: 'user',
-//                 model: 'User'
-//             }
-//         })
-//         .then(foundArticle => res.status(200).json(foundArticle))
-//         .catch(error => {
-//             res.json(error)
-//         });
-// });
-
-
-
-
-
 // PUT - update a specific article by id
 
 router.put('/api/articles/:articleId', isAuthenticated, (req, res, next) => {
-    console.log("request body object: ", req.body);
-    console.log('id parameters: ', req.params);
-
     const { articleId } = req.params;
 
     if (!mongoose.Types.ObjectId.isValid(articleId)) {
@@ -178,40 +175,42 @@ router.delete('/api/articles/:articleId', isAuthenticated, (req, res, next) => {
             return User.findOneAndUpdate({ _id: userId }, { $pull: { articles: article._id } })
 
         })
-    Article.findByIdAndRemove(articleId)
+        .then((updatedUser) => {
+            return Article.findByIdAndRemove(articleId)
+
+        })
         .then(() => {
-            res.json({ message: `Article #${articleId} is removed` })
+            res.json('article removed.')
         })
         .catch((error) => {
             res.json(error);
         });
-
-    /* another approach using includes() method 
-    
-    Article.findById(articleId)
-    .then((article) => {
-        const userId = article.user;
-        console.log("user id: ", userId)
-        return User.findById(userId)
-    })
-    .then((userFromDB) => {
-        console.log("Found user from db:", userFromDB)
-        const userArticles = userFromDB.articles;
-        console.log('array of articles: ', userArticles)
-        if (userArticles.includes(articleId)) {
-            return User.findByIdAndUpdate(userFromDB._id, { $pull: { articles: articleId } })
-        }
-
-    })
-Article.findByIdAndRemove(articleId)
-    .then(() => {
-        res.json({ message: `Article # ${articleId} is removed` })
-    })
-    
-    */
-
 });
+
+
+
+
+
 module.exports = router;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
