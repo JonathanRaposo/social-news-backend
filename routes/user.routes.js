@@ -35,14 +35,14 @@ router.put('/api/user/:userId', (req, res, next) => {
     console.log('parameter from request:', req.params);
     console.log('body from request: ', req.body);
 
-    const { email, password, firstName, lastName } = req.body;
+    const { email, firstName, lastName } = req.body;
 
     const { userId } = req.params;
 
 
     //make sure every input field is filled 
 
-    if (!email || !password || !firstName || !lastName) {
+    if (!email || !firstName || !lastName) {
         return res.status(400).json({ message: "Provide full name ,email and password." });
     }
 
@@ -52,27 +52,6 @@ router.put('/api/user/:userId', (req, res, next) => {
     if (!emailRegex.test(email)) {
         return res.status(400).json({ message: "Provide a valid email address." });
     }
-
-    //validate password format
-    if (password.length < 6) {
-        return res.status(400).json({ message: "6 character minimum." });
-    }
-
-    /*   this code is using regex validation format
-    
-          const passwordRegex = /(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{6,}/;
-    
-       if (!passwordRegex.test(password)) {
-        res.status(400).json({ message: 'Password must have at least 6 chars and contain at least one number, one lowercase and one uppercase letter' })
-        return;
-          }
-    */
-
-    // if (email) {
-    //     const salt = bcrypt.genSaltSync(saltRounds);
-    //     const hashedPassword = bcrypt.hashSync(password, salt);
-    //     req.body.password = hashedPassword;
-    // }
 
     User.findByIdAndUpdate(userId, req.body, { new: true })
         .then((updatedUser) => {
