@@ -7,6 +7,9 @@ const jsonwebtoken = require('jsonwebtoken');
 
 const Article = require('../models/Article.model');
 const User = require('../models/User.model');
+const hash = require('object-hash');
+
+
 
 
 // import middleware to protect routes
@@ -47,13 +50,14 @@ router.post('/api/articles', isAuthenticated, (req, res, next) => {
 // GET - Retrieve all of the user's articles
 
 router.get('/api/articles', isAuthenticated, (req, res, next) => {
-    // let token = isAuthenticated.getToken(req)
-    // console.log('auth token: ', token)
-    let token = req.headers.authorization.substring(`Bearer `.length)
 
-    console.log('auth token: ', token)
-    console.log('1111111: ', jsonwebtoken.decode(token, { complete: true }).payload._id)
-    const userId = jsonwebtoken.decode(token, { complete: true }).payload._id;
+    // another way to get user id using split or substring
+    // let token = req.headers.authorization.substring('Bearer '.length)
+    // let token = req.headers.authorization.split(" ")[1];
+    // const userId = jsonwebtoken.decode(token, { complete: true }).payload._id;
+
+    const userId = req.payload._id;
+
 
     User.findById(userId)
 
@@ -153,7 +157,7 @@ router.put('/api/articles/:articleId', isAuthenticated, (req, res, next) => {
 
 });
 
-// Delete a specific article by id
+// Delete article from user
 
 router.delete('/api/articles/:articleId', isAuthenticated, (req, res, next) => {
     console.log("parameters:", req.params)
@@ -164,11 +168,11 @@ router.delete('/api/articles/:articleId', isAuthenticated, (req, res, next) => {
         return;
     }
 
+    const userId = req.payload._id;
     Article.findById(articleId)
 
         .then((article) => {
-            console.log('article to be removed: ', article);
-            const userId = article.user;
+            console.log('article: ', article);
             console.log('this is the user id: ', userId);
 
             // delete article from user before removing it from the db.
@@ -176,15 +180,17 @@ router.delete('/api/articles/:articleId', isAuthenticated, (req, res, next) => {
 
         })
         .then((updatedUser) => {
-            return Article.findByIdAndRemove(articleId)
+            const articles = updatedUser.articles;
+            Article.find({ '_id': { $in: articles } })
 
         })
-        .then(() => {
-            res.json('article removed.')
+        .then((allArticles) => {
+            res.json(allArticles);
         })
         .catch((error) => {
             res.json(error);
         });
+
 });
 
 

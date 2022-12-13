@@ -4,6 +4,7 @@ const { Schema, model } = mongoose;
 
 const articleSchema = new Schema(
     {
+        external_id: String,
         image: String,
         url: String,
         name: String,
