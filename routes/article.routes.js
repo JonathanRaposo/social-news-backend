@@ -87,13 +87,20 @@ router.get('/api/articles', isAuthenticated, (req, res, next) => {
 // Route to sort articles in descending order
 router.get('/api/articles/sort/descending', isAuthenticated, (req, res, next) => {
 
-    Article.find()
-        .then((result) => {
-            const sortedArticles = result.sort((a, b) => b.createdAt - a.createdAt)
-            res.json(sortedArticles);
-        })
-        .catch((error) => {
-            res.json(error);
+    const userId = req.payload._id;
+
+    User.findById(userId)
+
+        .then((userfromDB) => {
+            const articles = userfromDB.articles;
+
+            Article.find({ '_id': { $in: articles } })
+
+                .then((allArticles) => {
+                    console.log('all users articles:', allArticles)
+                    const sortedArticles = allArticles.sort((a, b) => b.createdAt - a.createdAt)
+                    res.json(sortedArticles);
+                })
         })
 })
 
@@ -101,13 +108,19 @@ router.get('/api/articles/sort/descending', isAuthenticated, (req, res, next) =>
 
 router.get('/api/articles/sort/ascending', isAuthenticated, (req, res, next) => {
 
-    Article.find()
-        .then((result) => {
-            const sortedArticles = result.sort((a, b) => a.createdAt - b.createdAt)
-            res.json(sortedArticles);
-        })
-        .catch((error) => {
-            res.json(error);
+    const userId = req.payload._id;
+
+    User.findById(userId)
+        .then((userfromDB) => {
+            const articles = userfromDB.articles;
+
+            Article.find({ '_id': { $in: articles } })
+
+                .then((allArticles) => {
+                    console.log('all users articles:', allArticles)
+                    const sortedArticles = allArticles.sort((a, b) => a.createdAt - b.createdAt)
+                    res.json(sortedArticles);
+                })
         })
 })
 
