@@ -7,9 +7,6 @@ const jsonwebtoken = require('jsonwebtoken');
 
 const Article = require('../models/Article.model');
 const User = require('../models/User.model');
-const hash = require('object-hash');
-
-
 
 
 // import middleware to protect routes
@@ -58,11 +55,11 @@ router.get('/api/articles', isAuthenticated, (req, res, next) => {
 
     const userId = req.payload._id;
 
-
     User.findById(userId)
 
         .then((userFromDB) => {
             const articles = userFromDB.articles;
+
             // const ids = []
 
             Article.find({ '_id': { $in: articles } })
@@ -76,6 +73,7 @@ router.get('/api/articles', isAuthenticated, (req, res, next) => {
                     }
                 )
                 .then((allArticles) => {
+
                     res.json(allArticles);
                 })
                 .catch((error) => {
@@ -102,6 +100,8 @@ router.get('/api/articles/sort/descending', isAuthenticated, (req, res, next) =>
                     res.json(sortedArticles);
                 })
         })
+
+
 })
 
 // Route to sort articles in ascending order
@@ -122,7 +122,10 @@ router.get('/api/articles/sort/ascending', isAuthenticated, (req, res, next) => 
                     res.json(sortedArticles);
                 })
         })
+
 })
+
+
 
 // GET - get a specific article by id
 
@@ -147,6 +150,7 @@ router.get('/api/articles/:articleId', isAuthenticated, (req, res, next) => {
             res.json(error);
         });
 });
+
 
 
 // PUT - update a specific article by id
@@ -210,7 +214,21 @@ router.delete('/api/articles/:articleId', isAuthenticated, (req, res, next) => {
 
 
 
+
 module.exports = router;
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
