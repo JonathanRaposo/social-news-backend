@@ -54,6 +54,7 @@ router.get('/api/articles', isAuthenticated, (req, res, next) => {
     // const userId = jsonwebtoken.decode(token, { complete: true }).payload._id;
 
     const userId = req.payload._id;
+    const { sort } = req.query
 
     User.findById(userId)
 
@@ -73,8 +74,13 @@ router.get('/api/articles', isAuthenticated, (req, res, next) => {
                     }
                 )
                 .then((allArticles) => {
-
-                    res.json(allArticles);
+                    if (sort === 'true') {
+                        const descending = allArticles.sort((a, b) => b.createdAt - a.createdAt)
+                        res.json(descending);
+                    } else {
+                        const ascending = allArticles.sort((a, b) => a.createdAt - b.createdAt)
+                        res.json(ascending)
+                    }
                 })
                 .catch((error) => {
                     res.json(error)
@@ -82,48 +88,7 @@ router.get('/api/articles', isAuthenticated, (req, res, next) => {
         })
 
 });
-// Route to sort articles in descending order
-router.get('/api/articles/sort/descending', isAuthenticated, (req, res, next) => {
 
-    const userId = req.payload._id;
-
-    User.findById(userId)
-
-        .then((userfromDB) => {
-            const articles = userfromDB.articles;
-
-            Article.find({ '_id': { $in: articles } })
-
-                .then((allArticles) => {
-                    console.log('all users articles:', allArticles)
-                    const sortedArticles = allArticles.sort((a, b) => b.createdAt - a.createdAt)
-                    res.json(sortedArticles);
-                })
-        })
-
-
-})
-
-// Route to sort articles in ascending order
-
-router.get('/api/articles/sort/ascending', isAuthenticated, (req, res, next) => {
-
-    const userId = req.payload._id;
-
-    User.findById(userId)
-        .then((userfromDB) => {
-            const articles = userfromDB.articles;
-
-            Article.find({ '_id': { $in: articles } })
-
-                .then((allArticles) => {
-                    console.log('all users articles:', allArticles)
-                    const sortedArticles = allArticles.sort((a, b) => a.createdAt - b.createdAt)
-                    res.json(sortedArticles);
-                })
-        })
-
-})
 
 
 
