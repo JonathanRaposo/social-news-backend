@@ -26,7 +26,9 @@ router.post('/api/articles/:articleId/comment', isAuthenticated, (req, res, next
         .then((updatedArticle) => {
             res.json(updatedArticle)
         })
-
+        .catch((error) => {
+            res.json(error);
+        });
 
 })
 
