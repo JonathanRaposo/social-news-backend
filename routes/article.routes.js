@@ -61,8 +61,6 @@ router.get('/api/articles', isAuthenticated, (req, res, next) => {
         .then((userFromDB) => {
             const articles = userFromDB.articles;
 
-            // const ids = []
-
             Article.find({ '_id': { $in: articles } })
                 .populate('user comments')
                 .populate(
