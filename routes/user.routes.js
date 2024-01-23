@@ -77,7 +77,7 @@ router.delete('/api/user/:userId', (req, res, next) => {
         res.status(400).json({ message: 'Specified id is not valid.' });
         return;
     }
-    User.findByIdAndRemove(userId)
+    User.findByIdAndDelete(userId)
         .then(() => {
             res.json({ message: 'Your account has been deleted' })
         })
